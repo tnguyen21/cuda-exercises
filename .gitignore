@@ -1,0 +1,34 @@
+# C/C++ compilation
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.a
+*.lib
+
+# CUDA compilation
+*.ptx
+*.cubin
+*.fatbin
+*.obj
+*.exp
+*.log
+
+# Ignore build directories
+build/
+bin/
+obj/
+
+# Ignore core dumps
+*.core
+
+# image files
+*.ppm
+*.bmp
+*.jpg
+*.png
+
+*.zip
+
