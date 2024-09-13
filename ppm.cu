@@ -72,29 +72,37 @@ uint8_t*** read_ppm_to_tensor(const char* filename, int* width, int* height) {
 }
 
 __global__
-void greyscaleKernel() {
-  // do stuff
+void greyscaleKernel(uint8_t* arr_in, uint8_t* arr_out, int width, int height) {
+    int i = blockDim.x*blockIdx.x + threadIdx.x;
+    if (i < width*height) {
+        uint8_t grey = (uint8_t)(0.299*arr_in[i*3] + 0.587*arr_in[i*3+1] + 0.114*arr_in[i*3+2]);  
+        
+        arr_out[i*3] = grey;
+        arr_out[i*3+1] = grey;
+        arr_out[i*3+2] = grey;
+    }
 }
 
-void convert_to_greyscale(uint8_t*** tensor, int height, int width) {
-    //for (int i = 0; i < height; i++) {
-    //    for (int j = 0; j < width; j++) {
-    //        uint8_t grey = (uint8_t)(0.299 * tensor[i][j][0] + 0.587 * tensor[i][j][1] + 0.114 * tensor[i][j][2]);
-    //        tensor[i][j][0] = grey;
-    //        tensor[i][j][1] = grey;
-    //        tensor[i][j][2] = grey;
-    //    }
-    //}
-
+void convert_to_greyscale(uint8_t* arr_in, uint8_t* arr_out, int height, int width) {
     // allocate memory on device
+    int size = height * width * sizeof(uint8_t) 
+    uint8_t *arr_in_d, *arr_out_d;
+
+    cudaMalloc((void **), &arr_in_d, size);
+    cudaMalloc((void **), &arr_out_d, size); 
     
     // copy host data -> device
-    
+    cudaMemcpy(arr_in_d, arr_in, size, cudaMemcpyHostToDevice);
+
     // call kernel
+    greyscaleKernel<<<ceil(width*height/256.0), 256>>>(arr_in_d, arr_out_d, width, height);
 
     // copy device result -> host
-    
+    cudaMemcpy(arr_out, arr_out_d, size, cudaMemcpyDeviceToHost);
+
     // cudaFree any data
+    cudaFree(arr_in_d);
+    cudaFree(arr_out_d);
 }
 
 void write_tensor_to_ppm(const char* filename, uint8_t*** tensor, int width, int height) {
