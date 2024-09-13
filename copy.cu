@@ -33,7 +33,7 @@ int main() {
     cudaMalloc((void**)&d_output, size);
 
     // Copy input array from host to device
-    cudaMemcpy(d_input, &h_input, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_input, h_input, size, cudaMemcpyHostToDevice);
 
     // Launch kernel
     int numBlocks = (ARRAY_SIZE + BLOCK_SIZE - 1) / BLOCK_SIZE;
