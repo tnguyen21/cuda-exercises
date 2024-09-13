@@ -16,7 +16,7 @@ char* read_line(FILE* file, char* buffer, int max_length) {
     return NULL;
 }
 
-uint8_t*** read_ppm_to_tensor(const char* filename, int* width, int* height) {
+uint8_t* read_ppm_to_array(const char* filename, int* width, int* height) {
     FILE* file = fopen(filename, "rb");
     if (!file) {
         fprintf(stderr, "Error opening file\n");
@@ -68,7 +68,7 @@ uint8_t*** read_ppm_to_tensor(const char* filename, int* width, int* height) {
     }
 
     fclose(file);
-    return tensor;
+    return array;
 }
 
 __global__
@@ -85,11 +85,11 @@ void greyscaleKernel(uint8_t* arr_in, uint8_t* arr_out, int width, int height) {
 
 void convert_to_greyscale(uint8_t* arr_in, uint8_t* arr_out, int height, int width) {
     // allocate memory on device
-    int size = height * width * sizeof(uint8_t) 
+    int size = height * width * sizeof(uint8_t);
     uint8_t *arr_in_d, *arr_out_d;
 
-    cudaMalloc((void **), &arr_in_d, size);
-    cudaMalloc((void **), &arr_out_d, size); 
+    cudaMalloc((void **) &arr_in_d, size);
+    cudaMalloc((void **) &arr_out_d, size); 
     
     // copy host data -> device
     cudaMemcpy(arr_in_d, arr_in, size, cudaMemcpyHostToDevice);
@@ -105,7 +105,7 @@ void convert_to_greyscale(uint8_t* arr_in, uint8_t* arr_out, int height, int wid
     cudaFree(arr_out_d);
 }
 
-void write_tensor_to_ppm(const char* filename, uint8_t*** tensor, int width, int height) {
+void write_tensor_to_ppm(const char* filename, uint8_t* array, int width, int height) {
     FILE* file = fopen(filename, "wb");
     if (!file) {
         fprintf(stderr, "Error opening file for writing\n");
@@ -116,11 +116,7 @@ void write_tensor_to_ppm(const char* filename, uint8_t*** tensor, int width, int
     fprintf(file, "P6\n%d %d\n255\n", width, height);
 
     // Write pixel data
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            fwrite(tensor[i][j], sizeof(uint8_t), 3, file);
-        }
-    }
+    fwrite(array, sizeof(uint8_t), width*height*3, file);
 
     fclose(file);
 }
@@ -150,17 +146,18 @@ int main(int argc, char* argv[]) {
     }
 
     int width, height;
-    uint8_t*** tensor = read_ppm_to_tensor(input_filename, &width, &height);
+    uint8_t* array = read_ppm_to_array(input_filename, &width, &height);
+    uint8_t array_out[width*height*3];
 
-    if (tensor) {
+    if (array) {
         printf("PPM file read successfully!\n");
         printf("Width: %d, Height: %d\n", width, height);
 
         // Convert the image to greyscale
-        convert_to_greyscale(tensor, height, width);
+        convert_to_greyscale(array, array_out, height, width);
 
         // Write the modified tensor back to a new PPM file
-        write_tensor_to_ppm(output_filename, tensor, width, height);
+        write_tensor_to_ppm(output_filename, array_out, width, height);
         printf("Greyscale image saved as %s\n", output_filename);
 
         // Free array 
