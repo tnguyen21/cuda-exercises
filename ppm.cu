@@ -72,20 +72,16 @@ uint8_t* read_ppm_to_array(const char* filename, int* width, int* height) {
 }
 
 __global__
-void greyscaleKernel(uint8_t* arr_in, uint8_t* arr_out, int width, int height) {
+void greyscaleKernel(uint8_t* arr_in, uint8_t* arr_out, int n) {
     int i = blockDim.x*blockIdx.x + threadIdx.x;
-    if (i < width*height) {
-        uint8_t grey = (uint8_t)(0.299*arr_in[i*3] + 0.587*arr_in[i*3+1] + 0.114*arr_in[i*3+2]);  
-        
-        arr_out[i*3] = grey;
-        arr_out[i*3+1] = grey;
-        arr_out[i*3+2] = grey;
+    if (i < n) {
+        arr_out[i] = arr_in[i];
     }
 }
 
 void convert_to_greyscale(uint8_t* arr_in, uint8_t* arr_out, int height, int width) {
     // allocate memory on device
-    int size = height * width * sizeof(uint8_t);
+    int size = height * width * 3 * sizeof(uint8_t);
     uint8_t *arr_in_d, *arr_out_d;
 
     cudaMalloc((void **) &arr_in_d, size);
@@ -95,7 +91,9 @@ void convert_to_greyscale(uint8_t* arr_in, uint8_t* arr_out, int height, int wid
     cudaMemcpy(arr_in_d, arr_in, size, cudaMemcpyHostToDevice);
 
     // call kernel
-    greyscaleKernel<<<ceil(width*height/256.0), 256>>>(arr_in_d, arr_out_d, width, height);
+    int nThreads = 256;
+    int nBlocks = (size + nThreads - 1) / nThreads;
+    greyscaleKernel<<<nBlocks, nThreads>>>(arr_in_d, arr_out_d, size);
 
     // copy device result -> host
     cudaMemcpy(arr_out, arr_out_d, size, cudaMemcpyDeviceToHost);
