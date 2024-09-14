@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
 
     int width, height;
     uint8_t* array = read_ppm_to_array(input_filename, &width, &height);
-    uint8_t array_out[width*height*3];
+    uint8_t* array_out = (uint8_t*)malloc(width * height * 3 * sizeof(uint8_t));
 
     if (array) {
         printf("PPM file read successfully!\n");
