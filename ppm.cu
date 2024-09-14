@@ -75,7 +75,7 @@ __global__
 void greyscaleKernel(uint8_t* arr_in, uint8_t* arr_out, int n) {
     int i = blockDim.x*blockIdx.x + threadIdx.x;
     if (i < n) {
-        uint8_t grey = (uint8_t)(0.299*arr_in[i*3] + 0.587*arr_in[i*3+1] + 0.114*array[i*3+2]);
+        uint8_t grey = (uint8_t)(0.299*arr_in[i*3] + 0.587*arr_in[i*3+1] + 0.114*arr_in[i*3+2]);
 
         arr_out[i*3] = grey;
         arr_out[i*3+1] = grey;
