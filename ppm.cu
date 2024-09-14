@@ -75,7 +75,11 @@ __global__
 void greyscaleKernel(uint8_t* arr_in, uint8_t* arr_out, int n) {
     int i = blockDim.x*blockIdx.x + threadIdx.x;
     if (i < n) {
-        arr_out[i] = arr_in[i];
+        uint8_t grey = (uint8_t)(0.299*arr_in[i*3] + 0.587*arr_in[i*3+1] + 0.114*array[i*3+2]);
+
+        arr_out[i*3] = grey;
+        arr_out[i*3+1] = grey;
+        arr_out[i*3+2] = grey;
     }
 }
 
@@ -93,7 +97,7 @@ void convert_to_greyscale(uint8_t* arr_in, uint8_t* arr_out, int height, int wid
     // call kernel
     int nThreads = 256;
     int nBlocks = (size + nThreads - 1) / nThreads;
-    greyscaleKernel<<<nBlocks, nThreads>>>(arr_in_d, arr_out_d, size);
+    greyscaleKernel<<<nBlocks, nThreads>>>(arr_in_d, arr_out_d, width*height);
 
     // copy device result -> host
     cudaMemcpy(arr_out, arr_out_d, size, cudaMemcpyDeviceToHost);
@@ -159,6 +163,8 @@ int main(int argc, char* argv[]) {
         printf("Greyscale image saved as %s\n", output_filename);
 
         // Free array 
+        free(array_out);
+        free(array);
     } else {
         fprintf(stderr, "Failed to read input file: %s\n", input_filename);
         return 1;
