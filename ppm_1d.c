@@ -76,11 +76,25 @@ uint8_t* read_ppm_to_array(const char* filename, int* width, int* height) {
 }
 
 void convert_to_greyscale(uint8_t* array, int width, int height) {
-    for (int i = 0; i < width * height; i++) {
-        uint8_t grey = (uint8_t)(0.299 * array[i*3] + 0.587 * array[i*3+1] + 0.114 * array[i*3+2]);
-        array[i*3] = grey;
-        array[i*3+1] = grey;
-        array[i*3+2] = grey;
+    // both loops are equivalent ways to modify the image data
+
+    //for (int i = 0; i < width * height; i++) {
+    //    uint8_t grey = (uint8_t)(0.299 * array[i*3] + 0.587 * array[i*3+1] + 0.114 * array[i*3+2]);
+    //    array[i*3] = grey;
+    //    array[i*3+1] = grey;
+    //    array[i*3+2] = grey;
+    //}
+
+    for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+            int i = (row*width+col) * 3;
+            
+            uint8_t grey = (uint8_t)(0.299 * array[i] + 0.587 * array[i+1] + 0.114 * array[i+2]);
+            array[i] = grey;
+            array[i+1] = grey;
+            array[i+2] = grey;
+
+        }
     }
 }
 
