@@ -76,18 +76,40 @@ uint8_t* read_ppm_to_array(const char* filename, int* width, int* height) {
 }
 
 void blur(uint8_t* array, int width, int height) {
-    for (int row = 0; row < height; row++) {
-        for (int col = 0; col < width; col++) {
-            int i = (row*width+col) * 3;
+    uint8_t* tmp = (uint8_t*) malloc(height * width * 3 * sizeof(uint8_t));
+
+    for (int x = 0; x < height; x++) {
+        for (int y = 0; y < width; y++) {
+            int nPixels = 0;
+            int avgR = 0;
+            int avgG = 0;
+            int avgB = 0;
+
+            for (int i = -1; i < 2; ++i) {
+                for (int j = -1; j < 2; ++j) {
+                    if ((x+i) >= 0 && (x+i) < height && (y+j) >= 0 && (y+j) < width) {
+                        int idx = ((x+i) * width + (y+j)) * 3;
+                        avgR += array[idx];
+                        avgG += array[idx+1];
+                        avgB += array[idx+2];
+                        nPixels++;
+                    }
+                }
+            }
             
-            uint8_t grey = (uint8_t)(0.299 * array[i] + 0.587 * array[i+1] + 0.114 * array[i+2]);
-            array[i] = grey;
-            array[i+1] = grey;
-            array[i+2] = grey;
+            int idx = (x * width + y) * 3;
+            uint8_t blurR = (uint8_t)(avgR / nPixels);
+            uint8_t blurG = (uint8_t)(avgG / nPixels);
+            uint8_t blurB = (uint8_t)(avgB / nPixels);
+            tmp[idx]   = blurR;
+            tmp[idx+1] = blurG;
+            tmp[idx+2] = blurB;
         }
     }
-}
 
+    memcpy(array, tmp, height * width * 3 * sizeof(uint8_t));
+    free(tmp);
+}
 void write_array_to_ppm(const char* filename, uint8_t* array, int width, int height) {
     FILE* file = fopen(filename, "wb");
     if (!file) {
@@ -136,7 +158,7 @@ int main(int argc, char* argv[]) {
         blur(array, width, height);
 
         write_array_to_ppm(output_filename, array, width, height);
-        printf("Greyscale image saved as %s\n", output_filename);
+        printf("Blurred image saved as %s\n", output_filename);
 
         free(array);
     } else {
